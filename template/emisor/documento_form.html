@@ -1,0 +1,493 @@
+<!-- templates/emisor/documento_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Emitir Documento - SIGTE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .linea-documento {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 3px solid #3498db;
+    }
+    
+    .summary-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .summary-total {
+        font-weight: bold;
+        font-size: 1.2em;
+        border-top: 2px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    
+    .btn-add-line {
+        margin-bottom: 20px;
+    }
+    
+    .formset-header {
+        background-color: rgba(0,0,0,0.03);
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Emitir Documento Tributario</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{% url 'emisor:documento_list' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPreview">
+                <i class="fas fa-eye"></i> Vista Previa
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Complete todos los campos requeridos. Al finalizar, el documento será enviado para autorización automáticamente.
+</div>
+
+<form method="post" id="documentoForm">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Información General</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.tipo_documento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.referencia_interna|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.establecimiento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.nit_receptor|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.observaciones|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">Detalle del Documento</h6>
+                    <button type="button" class="btn btn-primary btn-sm" id="addLine">
+                        <i class="fas fa-plus"></i> Agregar Línea
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="formset-container">
+                        {{ lineas_formset.management_form }}
+                        
+                        <div class="formset-header row">
+                            <div class="col-md-5">Descripción</div>
+                            <div class="col-md-2">Cantidad</div>
+                            <div class="col-md-2">Precio</div>
+                            <div class="col-md-2">Descuento</div>
+                            <div class="col-md-1">Acción</div>
+                        </div>
+                        
+                        {% for form in lineas_formset %}
+                            <div class="linea-documento">
+                                {% for hidden_field in form.hidden_fields %}
+                                    {{ hidden_field }}
+                                {% endfor %}
+                                
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        {{ form.descripcion|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.cantidad|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.precio_unitario|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ form.descuento|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                        {% if forloop.first %}
+                                            <button type="button" class="btn btn-danger btn-sm remove-line" disabled>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% else %}
+                                            <button type="button" class="btn btn-danger btn-sm remove-line">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="subtotal-line text-end mt-2">
+                                    <strong>Subtotal:</strong> <span class="line-subtotal">Q 0.00</span>
+                                </div>
+                                
+                                {% if form.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4 position-sticky" style="top: 20px;">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Resumen</h6>
+                </div>
+                <div class="card-body">
+                    <div class="summary-box">
+                        <div class="summary-item">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">Q 0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Descuento:</span>
+                            <span id="descuento">Q 0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>IVA (12%):</span>
+                            <span id="iva">Q 0.00</span>
+                        </div>
+                        <div class="summary-item summary-total">
+                            <span>Total:</span>
+                            <span id="total">Q 0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-success btn-block w-100">
+                            <i class="fas fa-check"></i> Emitir Documento
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'emisor:documento_borrador_create' %}" class="btn btn-outline-secondary btn-block w-100">
+                            <i class="fas fa-save"></i> Guardar como Borrador
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Modal Vista Previa -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Vista Previa del Documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-container">
+                    <div class="document-preview">
+                        <div class="header text-center p-3 bg-light border-bottom mb-4">
+                            <h4 id="preview-titulo">FACTURA ELECTRÓNICA</h4>
+                            <p id="preview-referencia" class="mb-1">Referencia: </p>
+                            <p id="preview-fecha" class="mb-0">Fecha: </p>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <h5>Emisor</h5>
+                                <p><strong>{{ request.user.contribuyente.nombre }}</strong></p>
+                                <p>NIT: {{ request.user.contribuyente.nit }}</p>
+                                <p>{{ request.user.contribuyente.direccion }}</p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <h5>Receptor</h5>
+                                <p><strong id="preview-receptor-nombre"></strong></p>
+                                <p id="preview-receptor-nit">NIT: </p>
+                            </div>
+                        </div>
+                        
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Descuento</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="preview-lineas">
+                                <!-- Aquí se insertan las líneas dinámicamente -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                    <td class="text-end" id="preview-subtotal">Q 0.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Descuento:</strong></td>
+                                    <td class="text-end" id="preview-descuento">Q 0.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>IVA (12%):</strong></td>
+                                    <td class="text-end" id="preview-iva">Q 0.00</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                                    <td class="text-end" id="preview-total">Q 0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        
+                        <div class="mt-4 p-3 bg-light">
+                            <h6>Observaciones:</h6>
+                            <p id="preview-observaciones"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnPrint">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const formsetPrefix = '{{ lineas_formset.prefix }}';
+        const managementForm = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`);
+        const totalFormsField = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`);
+        const formContainer = document.querySelector('.formset-container');
+        const addLineBtn = document.getElementById('addLine');
+        const removeLineBtns = document.querySelectorAll('.remove-line');
+        
+        // Inicializar cálculos
+        updateCalculos();
+        
+        // Event listeners para cálculos automáticos
+        document.querySelectorAll('.linea-documento input').forEach(input => {
+            if (input.name.includes('cantidad') || input.name.includes('precio_unitario') || input.name.includes('descuento')) {
+                input.addEventListener('input', function() {
+                    updateLineaSubtotal(this.closest('.linea-documento'));
+                    updateCalculos();
+                });
+            }
+        });
+        
+        // Agregar línea
+        addLineBtn.addEventListener('click', function() {
+            const formCount = parseInt(totalFormsField.value);
+            const lastForm = document.querySelector('.linea-documento:last-child');
+            const newForm = lastForm.cloneNode(true);
+            
+            // Limpiar valores
+            newForm.querySelectorAll('input').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(`-${formCount-1}-`, `-${formCount}-`));
+                    input.setAttribute('id', input.getAttribute('id').replace(`-${formCount-1}-`, `-${formCount}-`));
+                    input.value = '';
+                }
+            });
+            
+            // Actualizar botón de remover
+            const removeBtn = newForm.querySelector('.remove-line');
+            removeBtn.disabled = false;
+            removeBtn.addEventListener('click', function() {
+                removeLinea(newForm);
+            });
+            
+            // Actualizar event listeners para cálculos
+            newForm.querySelectorAll('input').forEach(input => {
+                if (input.name.includes('cantidad') || input.name.includes('precio_unitario') || input.name.includes('descuento')) {
+                    input.addEventListener('input', function() {
+                        updateLineaSubtotal(newForm);
+                        updateCalculos();
+                    });
+                }
+            });
+            
+            // Resetear subtotal
+            newForm.querySelector('.line-subtotal').innerText = 'Q 0.00';
+            
+            // Agregar al DOM
+            formContainer.appendChild(newForm);
+            
+            // Incrementar contador de formularios
+            totalFormsField.value = formCount + 1;
+        });
+        
+        // Remover línea (configurar event listeners iniciales)
+        removeLineBtns.forEach(btn => {
+            if (!btn.disabled) {
+                btn.addEventListener('click', function() {
+                    removeLinea(this.closest('.linea-documento'));
+                });
+            }
+        });
+        
+        // Vista previa del documento
+        document.getElementById('btnPreview').addEventListener('click', function() {
+            // Cargar datos en el modal de vista previa
+            const tipoDocumento = document.getElementById('id_tipo_documento');
+            const referencia = document.getElementById('id_referencia_interna').value;
+            const nitReceptor = document.getElementById('id_nit_receptor').value;
+            const observaciones = document.getElementById('id_observaciones').value;
+            
+            // Establecer datos básicos
+            document.getElementById('preview-titulo').innerText = tipoDocumento.options[tipoDocumento.selectedIndex]?.text || 'DOCUMENTO TRIBUTARIO';
+            document.getElementById('preview-referencia').innerText = `Referencia: ${referencia}`;
+            document.getElementById('preview-fecha').innerText = `Fecha: ${new Date().toLocaleString()}`;
+            
+            // Receptor (esto sería dinámico en la implementación real)
+            document.getElementById('preview-receptor-nombre').innerText = 'RECEPTOR EJEMPLO';
+            document.getElementById('preview-receptor-nit').innerText = `NIT: ${nitReceptor}`;
+            
+            // Observaciones
+            document.getElementById('preview-observaciones').innerText = observaciones || 'Sin observaciones';
+            
+            // Crear líneas
+            const lineasContainer = document.getElementById('preview-lineas');
+            lineasContainer.innerHTML = '';
+            
+            // Para cada línea visible
+            document.querySelectorAll('.linea-documento').forEach(linea => {
+                const descripcion = linea.querySelector('input[name*="descripcion"]').value;
+                const cantidad = parseFloat(linea.querySelector('input[name*="cantidad"]').value) || 0;
+                const precio = parseFloat(linea.querySelector('input[name*="precio_unitario"]').value) || 0;
+                const descuento = parseFloat(linea.querySelector('input[name*="descuento"]').value) || 0;
+                const subtotal = (cantidad * precio) - descuento;
+                
+                if (descripcion && cantidad && precio) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${descripcion}</td>
+                        <td class="text-center">${cantidad.toLocaleString()}</td>
+                        <td class="text-end">Q ${precio.toFixed(2)}</td>
+                        <td class="text-end">Q ${descuento.toFixed(2)}</td>
+                        <td class="text-end">Q ${subtotal.toFixed(2)}</td>
+                    `;
+                    lineasContainer.appendChild(tr);
+                }
+            });
+            
+            // Actualizar totales
+            document.getElementById('preview-subtotal').innerText = document.getElementById('subtotal').innerText;
+            document.getElementById('preview-descuento').innerText = document.getElementById('descuento').innerText;
+            document.getElementById('preview-iva').innerText = document.getElementById('iva').innerText;
+            document.getElementById('preview-total').innerText = document.getElementById('total').innerText;
+            
+            // Mostrar modal
+            const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+            previewModal.show();
+        });
+        
+        // Imprimir vista previa
+        document.getElementById('btnPrint').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Funciones auxiliares
+        function removeLinea(linea) {
+            linea.remove();
+            
+            // Renumerar campos para mantener secuencia correcta
+            const lineas = document.querySelectorAll('.linea-documento');
+            lineas.forEach((linea, index) => {
+                linea.querySelectorAll('input').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        const newName = name.replace(/-\d+-/, `-${index}-`);
+                        input.setAttribute('name', newName);
+                        input.setAttribute('id', input.getAttribute('id').replace(/-\d+-/, `-${index}-`));
+                    }
+                });
+            });
+            
+            // Actualizar contador de formularios
+            totalFormsField.value = lineas.length;
+            
+            // Actualizar cálculos
+            updateCalculos();
+        }
+        
+        function updateLineaSubtotal(linea) {
+            const cantidad = parseFloat(linea.querySelector('input[name*="cantidad"]').value) || 0;
+            const precio = parseFloat(linea.querySelector('input[name*="precio_unitario"]').value) || 0;
+            const descuento = parseFloat(linea.querySelector('input[name*="descuento"]').value) || 0;
+            
+            const subtotal = (cantidad * precio) - descuento;
+            linea.querySelector('.line-subtotal').innerText = `Q ${subtotal.toFixed(2)}`;
+        }
+        
+        function updateCalculos() {
+            let subtotal = 0;
+            let descuentoTotal = 0;
+            
+            // Sumar subtotales de cada línea
+            document.querySelectorAll('.linea-documento').forEach(linea => {
+                const cantidad = parseFloat(linea.querySelector('input[name*="cantidad"]').value) || 0;
+                const precio = parseFloat(linea.querySelector('input[name*="precio_unitario"]').value) || 0;
+                const descuento = parseFloat(linea.querySelector('input[name*="descuento"]').value) || 0;
+                
+                subtotal += cantidad * precio;
+                descuentoTotal += descuento;
+            });
+            
+            // Calcular IVA y total
+            const baseImponible = subtotal - descuentoTotal;
+            const iva = baseImponible * 0.12;
+            const total = baseImponible + iva;
+            
+            // Actualizar resumen
+            document.getElementById('subtotal').innerText = `Q ${subtotal.toFixed(2)}`;
+            document.getElementById('descuento').innerText = `Q ${descuentoTotal.toFixed(2)}`;
+            document.getElementById('iva').innerText = `Q ${iva.toFixed(2)}`;
+            document.getElementById('total').innerText = `Q ${total.toFixed(2)}`;
+        }
+    });
+</script>
+{% endblock %}

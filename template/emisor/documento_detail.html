@@ -1,0 +1,509 @@
+<!-- templates/emisor/documento_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}Documento {{ documento.referencia_interna }} - SIGTE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge-autorizado {
+        background-color: #1cc88a;
+        color: white;
+    }
+    
+    .badge-emitido {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .badge-borrador {
+        background-color: #858796;
+        color: white;
+    }
+    
+    .badge-rechazado {
+        background-color: #e74a3b;
+        color: white;
+    }
+    
+    .badge-anulado {
+        background-color: #f6c23e;
+        color: white;
+    }
+    
+    .autorizacion-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #1cc88a;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .rechazo-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #e74a3b;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .documento-header {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .details-section {
+        margin-bottom: 30px;
+    }
+    
+    .details-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .details-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    
+    .details-label {
+        width: 180px;
+        font-weight: bold;
+    }
+    
+    .details-value {
+        flex: 1;
+    }
+    
+    .lineas-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .lineas-table th {
+        background-color: #f8f9fa;
+        padding: 10px;
+        text-align: left;
+        border-bottom: 2px solid #e3e6f0;
+    }
+    
+    .lineas-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .lineas-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .totales-section {
+        margin-top: 20px;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    
+    .total-row.final {
+        font-weight: bold;
+        font-size: 1.1rem;
+        border-top: 2px solid #e3e6f0;
+        border-bottom: none;
+        margin-top: 8px;
+        padding-top: 12px;
+    }
+    
+    .qr-code {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .actions-bar {
+        margin-bottom: 20px;
+    }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        .print-container {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .card-header {
+            background-color: white !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="actions-bar no-print">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            {{ documento.tipo_documento.nombre }} 
+            <span class="h4 text-muted">{{ documento.referencia_interna }}</span>
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{% url 'emisor:documento_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                {% if documento.estado == 'AUTORIZADO' %}
+                    <a href="#" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
+                {% endif %}
+            </div>
+            
+            {% if documento.es_borrador %}
+                <div class="btn-group">
+                    <a href="{% url 'emisor:documento_borrador_update' documento.id %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'emisor:documento_borrador_emitir' documento.id %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-paper-plane"></i> Emitir
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="print-container">
+    <!-- Estado del documento -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-body p-0">
+                    <div class="documento-header d-md-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">{{ documento.tipo_documento.nombre }} #{{ documento.referencia_interna }}</h4>
+                            <p class="mb-0 text-muted">Emitido el {{ documento.fecha_emision|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="mt-3 mt-md-0">
+                            <span class="badge rounded-pill bg-{{ documento.estado|lower }} px-3 py-2">
+                                {{ documento.get_estado_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if autorizacion %}
+                        {% if autorizacion.estado == 'APROBADO' %}
+                            <div class="autorizacion-box mx-4 mb-4">
+                                <h5><i class="fas fa-check-circle me-2"></i> Documento Autorizado</h5>
+                                <p class="mb-1"><strong>Número de Autorización:</strong> {{ autorizacion.numero_autorizacion }}</p>
+                                <p class="mb-0"><strong>Fecha de Autorización:</strong> {{ autorizacion.fecha_autorizacion|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        {% elif autorizacion.estado == 'RECHAZADO' %}
+                            <div class="rechazo-box mx-4 mb-4">
+                                <h5><i class="fas fa-times-circle me-2"></i> Documento Rechazado</h5>
+                                <p class="mb-1"><strong>Fecha de Rechazo:</strong> {{ autorizacion.fecha_autorizacion|date:"d/m/Y H:i" }}</p>
+                                <p class="mb-0"><strong>Motivos:</strong></p>
+                                <ul>
+                                    {% for error in autorizacion.autorizacionerror_set.all %}
+                                        <li>{{ error.error.descripcion }}{% if error.detalle %}: {{ error.detalle }}{% endif %}</li>
+                                    {% empty %}
+                                        <li>No se especificaron motivos.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Información principal -->
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Información del Documento</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="details-section">
+                                <div class="details-title">Emisor</div>
+                                <div class="details-row">
+                                    <div class="details-label">Nombre:</div>
+                                    <div class="details-value">{{ documento.emisor.nombre }}</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="details-label">NIT:</div>
+                                    <div class="details-value">{{ documento.emisor.nit }}</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="details-label">Dirección:</div>
+                                    <div class="details-value">{{ documento.emisor.direccion }}</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="details-label">Establecimiento:</div>
+                                    <div class="details-value">{{ documento.establecimiento.nombre }} ({{ documento.establecimiento.codigo }})</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="details-section">
+                                <div class="details-title">Receptor</div>
+                                <div class="details-row">
+                                    <div class="details-label">Nombre:</div>
+                                    <div class="details-value">{{ documento.receptor.nombre }}</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="details-label">NIT:</div>
+                                    <div class="details-value">{{ documento.receptor.nit }}</div>
+                                </div>
+                                <div class="details-row">
+                                    <div class="details-label">Dirección:</div>
+                                    <div class="details-value">{{ documento.receptor.direccion }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if documento.observaciones %}
+                        <div class="details-section">
+                            <div class="details-title">Observaciones</div>
+                            <p>{{ documento.observaciones }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Líneas del documento -->
+                    <div class="details-section">
+                        <div class="details-title">Detalle</div>
+                        <table class="lineas-table">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Descuento</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for linea in documento.lineas.all %}
+                                    <tr>
+                                        <td>{{ linea.descripcion }}</td>
+                                        <td class="text-center">{{ linea.cantidad }}</td>
+                                        <td class="text-end">Q {{ linea.precio_unitario|floatformat:2 }}</td>
+                                        <td class="text-end">Q {{ linea.descuento|floatformat:2 }}</td>
+                                        <td class="text-end">Q {{ linea.subtotal|floatformat:2 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Totales -->
+                    <div class="totales-section">
+                        <div class="total-row">
+                            <div>Subtotal</div>
+                            <div>Q {{ documento.subtotal|floatformat:2 }}</div>
+                        </div>
+                        <div class="total-row">
+                            <div>Descuento</div>
+                            <div>Q {{ documento.descuento|floatformat:2 }}</div>
+                        </div>
+                        <div class="total-row">
+                            <div>IVA (12%)</div>
+                            <div>Q {{ documento.iva|floatformat:2 }}</div>
+                        </div>
+                        <div class="total-row final">
+                            <div>TOTAL</div>
+                            <div>Q {{ documento.total|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información complementaria -->
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Información Adicional</h6>
+                </div>
+                <div class="card-body">
+                    <div class="details-section">
+                        <div class="details-title">Datos del Documento</div>
+                        <div class="details-row">
+                            <div class="details-label">Tipo:</div>
+                            <div class="details-value">{{ documento.tipo_documento.nombre }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">Referencia:</div>
+                            <div class="details-value">{{ documento.referencia_interna }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">Fecha Emisión:</div>
+                            <div class="details-value">{{ documento.fecha_emision|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        <div class="details-row">
+                            <div class="details-label">Moneda:</div>
+                            <div class="details-value">{{ documento.moneda }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if autorizacion and autorizacion.estado == 'APROBADO' %}
+                        <div class="details-section">
+                            <div class="details-title">Datos de Autorización</div>
+                            <div class="details-row">
+                                <div class="details-label">Número:</div>
+                                <div class="details-value">{{ autorizacion.numero_autorizacion }}</div>
+                            </div>
+                            <div class="details-row">
+                                <div class="details-label">Fecha:</div>
+                                <div class="details-value">{{ autorizacion.fecha_autorizacion|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Código QR para verificación -->
+                        <div class="qr-code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://sigte.example.com/verificar?no={{ autorizacion.numero_autorizacion }}" alt="Código QR para verificación">
+                            <p class="text-muted mt-2">Escanea para verificar</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Acciones para documentos -->
+            <div class="card shadow mb-4 no-print">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Acciones</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if documento.estado == 'AUTORIZADO' %}
+                            <a href="#" class="btn btn-success btn-block">
+                                <i class="fas fa-file-pdf me-2"></i> Descargar Documento
+                            </a>
+                            <a href="#" class="btn btn-info btn-block">
+                                <i class="fas fa-envelope me-2"></i> Enviar por Email
+                            </a>
+                        {% elif documento.estado == 'EMITIDO' %}
+                            <p class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> El documento está pendiente de autorización
+                            </p>
+                        {% elif documento.estado == 'BORRADOR' %}
+                            <a href="{% url 'emisor:documento_borrador_update' documento.id %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-edit me-2"></i> Editar Borrador
+                            </a>
+                            <a href="{% url 'emisor:documento_borrador_emitir' documento.id %}" class="btn btn-success btn-block mt-2">
+                                <i class="fas fa-paper-plane me-2"></i> Emitir Documento
+                            </a>
+                        {% elif documento.estado == 'RECHAZADO' %}
+                            <p class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Documento rechazado
+                            </p>
+                            <a href="{% url 'emisor:documento_create' %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-plus me-2"></i> Crear Nuevo Documento
+                            </a>
+                        {% endif %}
+                        
+                        <button type="button" class="btn btn-outline-secondary btn-block mt-3" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i> Imprimir
+                        </button>
+                        
+                        {% if documento.estado == 'AUTORIZADO' %}
+                            <button type="button" class="btn btn-outline-danger btn-block mt-3" data-bs-toggle="modal" data-bs-target="#anularModal">
+                                <i class="fas fa-ban me-2"></i> Solicitar Anulación
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Anulación -->
+{% if documento.estado == 'AUTORIZADO' %}
+<div class="modal fade" id="anularModal" tabindex="-1" aria-labelledby="anularModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="anularModalLabel">Solicitar Anulación de Documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Esta acción no se puede deshacer. La anulación está sujeta a aprobación.
+                </div>
+                <form id="anularForm">
+                    <div class="mb-3">
+                        <label for="motivoAnulacion" class="form-label">Motivo de Anulación</label>
+                        <select class="form-select" id="motivoAnulacion" required>
+                            <option value="">Seleccione un motivo</option>
+                            <option value="ERROR_DATOS">Error en los datos</option>
+                            <option value="DUPLICADO">Documento duplicado</option>
+                            <option value="CANCELACION">Cancelación de operación</option>
+                            <option value="OTRO">Otro motivo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcionAnulacion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcionAnulacion" rows="3" required placeholder="Describa detalladamente el motivo de la anulación..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnSolicitarAnulacion">
+                    <i class="fas fa-ban me-2"></i> Solicitar Anulación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botón para solicitar anulación
+        const btnSolicitarAnulacion = document.getElementById('btnSolicitarAnulacion');
+        if (btnSolicitarAnulacion) {
+            btnSolicitarAnulacion.addEventListener('click', function() {
+                const motivo = document.getElementById('motivoAnulacion').value;
+                const descripcion = document.getElementById('descripcionAnulacion').value;
+                
+                if (!motivo || !descripcion) {
+                    alert('Por favor complete todos los campos');
+                    return;
+                }
+                
+                // Aquí iría la lógica para enviar la solicitud de anulación
+                // En una implementación real, esto enviaría una petición AJAX al servidor
+                alert('Solicitud de anulación enviada correctamente. Recibirá una notificación cuando sea procesada.');
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('anularModal'));
+                modal.hide();
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -144,7 +144,7 @@ sigte/
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/sigte.git
+git clone https://github.com/rivalTj7/IPC2-Conferencia-.git
 cd sigte
 ```
 
@@ -460,4 +460,4 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](L
 
 ## Contacto
 
-- Email: [rival.alex7@gmail.com](mailto:tu-email@example.com)
+- Email: [rival.alex7@gmail.com](mailto:rival.alex7@gmail.com)

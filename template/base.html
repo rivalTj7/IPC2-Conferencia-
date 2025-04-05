@@ -1,0 +1,338 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SIGTE - Sistema de Gestión Tributaria Electrónica{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --sigte-primary: #2c3e50;
+            --sigte-secondary: #3498db;
+            --sigte-accent: #1abc9c;
+            --sigte-light: #ecf0f1;
+            --sigte-dark: #34495e;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .navbar-sigte {
+            background-color: var(--sigte-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        
+        .nav-link:hover {
+            color: white !important;
+        }
+        
+        .sidebar {
+            background-color: var(--sigte-dark);
+            color: white;
+            min-height: calc(100vh - 56px);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-link {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            display: block;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 3px solid var(--sigte-accent);
+        }
+        
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 8px;
+        }
+        
+        .content {
+            padding: 1.5rem;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: rgba(0,0,0,0.03);
+            font-weight: bold;
+            border-bottom: 1px solid rgba(0,0,0,0.125);
+        }
+        
+        .btn-primary {
+            background-color: var(--sigte-secondary);
+            border-color: var(--sigte-secondary);
+        }
+        
+        .btn-success {
+            background-color: var(--sigte-accent);
+            border-color: var(--sigte-accent);
+        }
+        
+        .badge-primary {
+            background-color: var(--sigte-secondary);
+        }
+        
+        .badge-success {
+            background-color: var(--sigte-accent);
+        }
+        
+        .alert-custom {
+            background-color: var(--sigte-light);
+            border-color: var(--sigte-secondary);
+            color: var(--sigte-dark);
+        }
+        
+        .footer {
+            background-color: var(--sigte-primary);
+            color: white;
+            padding: 1rem 0;
+            margin-top: 2rem;
+        }
+        
+        .stat-card {
+            border-left: 4px solid var(--sigte-secondary);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--sigte-accent);
+        }
+        
+        .stat-card.warning {
+            border-left-color: #f39c12;
+        }
+        
+        .stat-card.danger {
+            border-left-color: #e74c3c;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.6;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-sigte">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-file-invoice"></i> SIGTE
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:dashboard' %}">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i> {{ user.get_short_name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Mi Perfil</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Cambiar Contraseña</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Cerrar Sesión</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">Iniciar Sesión</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:register' %}">Registrarse</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated %}
+                <!-- Sidebar -->
+                <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                            </li>
+                            
+                            {% if user.is_contribuyente %}
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'emisor:documento' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'emisor:documento_list' %}">
+                                        <i class="fas fa-file-invoice"></i> Documentos
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link" href="{% url 'emisor:documento_create' %}">
+                                        <i class="fas fa-plus-circle"></i> Nuevo Documento
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link" href="{% url 'emisor:documento_borrador_create' %}">
+                                        <i class="fas fa-edit"></i> Nuevo Borrador
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'emisor:establecimiento' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'emisor:establecimiento_list' %}">
+                                        <i class="fas fa-store"></i> Establecimientos
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% if user.is_auditor or user.is_admin %}
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'consulta:estadisticas' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'consulta:estadisticas' %}">
+                                        <i class="fas fa-chart-bar"></i> Estadísticas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'consulta:reporte_iva' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'consulta:reporte_iva' %}">
+                                        <i class="fas fa-percentage"></i> Reporte IVA
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'consulta:reporte_rango_fechas' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'consulta:reporte_rango_fechas' %}">
+                                        <i class="fas fa-calendar-alt"></i> Reporte por Fechas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'consulta:exportar_csv' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'consulta:exportar_csv' %}">
+                                        <i class="fas fa-file-csv"></i> Exportar CSV
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link {% if 'consulta:generar_pdf' in request.resolver_match.view_name %}active{% endif %}" href="{% url 'consulta:generar_pdf' %}">
+                                        <i class="fas fa-file-pdf"></i> Generar PDF
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% if user.is_admin %}
+                                <li class="nav-item mt-3">
+                                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                        <span>Administración</span>
+                                    </h6>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="sidebar-link" href="{% url 'admin:index' %}">
+                                        <i class="fas fa-cogs"></i> Panel Admin
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="nav-item mt-3">
+                                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                                    <span>API</span>
+                                </h6>
+                            </li>
+                            <li class="nav-item">
+                                <a class="sidebar-link" href="/api/docs/" target="_blank">
+                                    <i class="fas fa-book"></i> Documentación API
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Main content -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div class="content">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% block content %}{% endblock %}
+                    </div>
+                </main>
+            {% else %}
+                <div class="col-12">
+                    <div class="content">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% block content_unauthenticated %}{% endblock %}
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 {{ system_name }}. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>Versión {{ system_version }}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
